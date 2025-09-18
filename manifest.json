@@ -1,0 +1,9 @@
+{
+  "name": "Peak Late Join",
+  "version_number": "1.0.0",
+  "website_url": "",
+  "description": "Allow late joining of a game. Catch up to your friends!",
+  "dependencies": [
+    "BepInEx-BepInExPack_PEAK-5.4.2403"
+  ]
+}
