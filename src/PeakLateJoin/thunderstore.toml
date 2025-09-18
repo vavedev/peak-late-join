@@ -2,13 +2,13 @@
 schemaVersion = "0.0.1"
 
 [general]
-repository = "https://thunderstore.io"
+repository = ""
 
 [package]
 namespace = "vavedev"
 name = "PeakLateJoin"
-description = "TODO: Fill in short mod description."
-websiteUrl = "" # TODO: Add a link to your mod repository here (optional)
+description = "Allow late joining of a game. Catch up to your friends!"
+websiteUrl = ""
 containsNsfwContent = false
 
 [package.dependencies]
@@ -36,9 +36,9 @@ target = "/"
 [publish]
 # See communities at:
 # https://thunderstore.io/api/experimental/community/
-communities = [ "peak", ]
+communities = [ "peak"]
 
 [publish.categories]
 # See categories at:
 # https://thunderstore.io/api/experimental/community/peak/category/
-peak = [ "mods", ]
+peak = [ "qol", "host"]
