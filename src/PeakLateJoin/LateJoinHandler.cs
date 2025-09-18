@@ -1,7 +1,7 @@
-using System.Collections;
+﻿using System.Collections;
 using BepInEx.Logging;
 using Photon.Pun;
-using Photon.Realtime;
+using Photon.Realtime; // 👈 important
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
@@ -16,7 +16,8 @@ namespace PeakLateJoin
             _logger = logger;
         }
 
-        public override void OnPlayerEnteredRoom(Player newPlayer)
+        // Correct override
+        public override void OnPlayerEnteredRoom(Photon.Realtime.Player newPlayer)
         {
             Scene activeScene = SceneManager.GetActiveScene();
             if (activeScene.name != "Airport")
@@ -25,18 +26,16 @@ namespace PeakLateJoin
             }
         }
 
-        private IEnumerator HandleLateJoin(Player newPlayer)
+        private IEnumerator HandleLateJoin(Photon.Realtime.Player newPlayer)
         {
             Character newCharacter = null;
 
-            // Wait until the character actually exists
             while (newCharacter == null)
             {
                 newCharacter = PlayerHandler.GetPlayerCharacter(newPlayer);
                 yield return null;
             }
 
-            // Allow time for Photon sync
             yield return new WaitForSeconds(0.5f);
 
             ImprovedSpawnTarget spawnTarget = PopulateSpawnData(newCharacter);
@@ -46,7 +45,6 @@ namespace PeakLateJoin
                 yield break;
             }
 
-            // Perform safe warp
             yield return TeleportUtils.SafeWarp(newCharacter, spawnTarget.LowestCharacter, _logger);
         }
 
