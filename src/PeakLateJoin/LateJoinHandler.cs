@@ -1,7 +1,6 @@
 ﻿using System.Collections;
 using BepInEx.Logging;
 using Photon.Pun;
-using Photon.Realtime; // 👈 important
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
@@ -16,7 +15,6 @@ namespace PeakLateJoin
             _logger = logger;
         }
 
-        // Correct override
         public override void OnPlayerEnteredRoom(Photon.Realtime.Player newPlayer)
         {
             Scene activeScene = SceneManager.GetActiveScene();
