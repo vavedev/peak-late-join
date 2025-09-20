@@ -24,27 +24,53 @@ namespace PeakLateJoin
             }
         }
 
+        public override void OnPlayerLeftRoom(Photon.Realtime.Player otherPlayer)
+        {
+            Character character = PlayerHandler.GetPlayerCharacter(otherPlayer);
+            if (character != null && character.data != null)
+            {
+                SaveDeathState(otherPlayer, character.data.dead);
+            }
+        }
+
         private IEnumerator HandleLateJoin(Photon.Realtime.Player newPlayer)
         {
             Character newCharacter = null;
 
-            // Wait until the Character object exists
             while (newCharacter == null)
             {
                 newCharacter = PlayerHandler.GetPlayerCharacter(newPlayer);
                 yield return null;
             }
 
-            // Wait until the character is fully initialized and alive
-            while (newCharacter.data == null || newCharacter.data.dead)
+            bool wasDead = false;
+            string savedStage = null;
+
+            if (PhotonNetwork.CurrentRoom.CustomProperties.TryGetValue($"dead_{newPlayer.ActorNumber}", out object deadState))
+            {
+                wasDead = (bool)deadState;
+            }
+            if (PhotonNetwork.CurrentRoom.CustomProperties.TryGetValue($"stage_{newPlayer.ActorNumber}", out object stageState))
+            {
+                savedStage = stageState as string;
+            }
+
+            string currentStage = SceneManager.GetActiveScene().name;
+
+            if (wasDead && savedStage == currentStage)
+            {
+                _logger.LogInfo($"Player {newCharacter.characterName} was dead in stage {currentStage}, keeping them dead.");
+                newCharacter.data.dead = true;
+                yield break;
+            }
+
+            while (newCharacter.data == null)
             {
                 yield return null;
             }
 
-            // Extra buffer to allow Photon to finish sync
             yield return new WaitForSeconds(0.5f);
 
-            // Find a safe spawn target
             ImprovedSpawnTarget spawnTarget = PopulateSpawnData(newCharacter);
             if (spawnTarget.LowestCharacter == null)
             {
@@ -54,15 +80,15 @@ namespace PeakLateJoin
 
             _logger.LogInfo($"Peak late join: {newCharacter.characterName} will be warped near {spawnTarget.LowestCharacter.characterName}");
 
-            // Warp safely
             yield return TeleportUtils.SafeWarp(newCharacter, spawnTarget.LowestCharacter, _logger);
 
-            // Ensure player is alive after warp
-            if (newCharacter.data.dead)
+            if (wasDead && savedStage != currentStage)
             {
                 newCharacter.data.dead = false;
-                _logger.LogInfo($"Revived {newCharacter.characterName} from ghost state after warp.");
+                _logger.LogInfo($"Revived {newCharacter.characterName} since stage changed ({savedStage} → {currentStage}).");
             }
+
+            SaveDeathState(newPlayer, newCharacter.data.dead);
         }
 
         private static ImprovedSpawnTarget PopulateSpawnData(Character newCharacter)
@@ -76,6 +102,18 @@ namespace PeakLateJoin
                 }
             }
             return result;
+        }
+
+        private static void SaveDeathState(Photon.Realtime.Player player, bool isDead)
+        {
+            var currentScene = SceneManager.GetActiveScene().name;
+
+            var props = new ExitGames.Client.Photon.Hashtable
+            {
+                { $"dead_{player.ActorNumber}", isDead },
+                { $"stage_{player.ActorNumber}", currentScene }
+            };
+            PhotonNetwork.CurrentRoom.SetCustomProperties(props);
         }
     }
 }
