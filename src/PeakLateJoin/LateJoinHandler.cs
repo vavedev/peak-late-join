@@ -1,4 +1,5 @@
 ﻿using System.Collections;
+using System.Collections.Generic;
 using BepInEx.Logging;
 using Photon.Pun;
 using UnityEngine;
@@ -10,9 +11,31 @@ namespace PeakLateJoin
     {
         private ManualLogSource _logger;
 
+        private readonly Dictionary<int, bool> _lastKnownDead = new Dictionary<int, bool>();
+
         public void InitLogger(ManualLogSource logger)
         {
             _logger = logger;
+        }
+
+        private void Update()
+        {
+            foreach (Character c in Character.AllCharacters)
+            {
+                if (c?.photonView == null || c.photonView.Owner == null || c.data == null)
+                    continue;
+
+                int actorId = c.photonView.Owner.ActorNumber;
+                bool isDead = c.data.dead;
+
+                if (!_lastKnownDead.TryGetValue(actorId, out bool lastState) || lastState != isDead)
+                {
+                    SaveDeathState(c.photonView.Owner, isDead);
+                    _lastKnownDead[actorId] = isDead;
+
+                    _logger?.LogInfo($"Updated death state for {c.characterName}: {(isDead ? "dead" : "alive")}");
+                }
+            }
         }
 
         public override void OnPlayerEnteredRoom(Photon.Realtime.Player newPlayer)
@@ -30,6 +53,7 @@ namespace PeakLateJoin
             if (character != null && character.data != null)
             {
                 SaveDeathState(otherPlayer, character.data.dead);
+                _lastKnownDead[otherPlayer.ActorNumber] = character.data.dead;
             }
         }
 
@@ -89,6 +113,7 @@ namespace PeakLateJoin
             }
 
             SaveDeathState(newPlayer, newCharacter.data.dead);
+            _lastKnownDead[newPlayer.ActorNumber] = newCharacter.data.dead;
         }
 
         private static ImprovedSpawnTarget PopulateSpawnData(Character newCharacter)

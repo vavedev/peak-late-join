@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.1.2] - 2025-09-20
+
+### Changed
+
+- Late join handler to use cache for room data, improving performance and reliability.
+
 ## [1.1.1] - 2025-09-20
 
 ### Changed
