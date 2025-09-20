@@ -10,7 +10,7 @@ Allow late joining of a game. Catch up to your friends!
 ## Warning
 There are mods that are incompatible with this mod, such as mods that modify player spawning or game state in a way that conflicts with late joining. Please ensure you test thoroughly if you are using other mods alongside this one.
 
-## Note
+## Developer Note
 If you are gonna be warping or reviving a scout make sure to:
 - Revive them one by one (to prevent desyncs and large packets being sent at once); this also prevents Proton errors
 - Wait a few seconds between each revive/warp
