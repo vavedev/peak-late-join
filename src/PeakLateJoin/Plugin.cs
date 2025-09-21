@@ -9,7 +9,7 @@ namespace PeakLateJoin
     {
         public const string PLUGIN_GUID = "vavedev.PeakLateJoin";
         public const string PLUGIN_NAME = "Peak Late Join";
-        public const string PLUGIN_VERSION = "1.2.0";
+        public const string PLUGIN_VERSION = "1.2.1";
 
         internal static ManualLogSource Log { get; private set; } = null!;
 

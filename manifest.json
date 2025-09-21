@@ -1,6 +1,6 @@
 {
   "name": "Peak Late Join",
-  "version_number": "1.0.0",
+  "version_number": "1.2.1",
   "website_url": "",
   "description": "Allow late joining of a game. Catch up to your friends!",
   "dependencies": [
