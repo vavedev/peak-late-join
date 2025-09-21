@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.2.0] - 2025-09-21
+
+### Changed
+
+- Safe warp handling. Made sure to check if the player is already in a safe warp state before applying a new safe warp. This prevents conflicts and ensures that players are not inadvertently moved to incorrect positions.
+- Checking for ground before warping. If the player is not on the ground, the safe warp will not be applied, preventing potential issues with mid-air warps.
+
 ## [1.1.2] - 2025-09-20
 
 ### Changed
