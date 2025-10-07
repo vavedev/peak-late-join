@@ -5,15 +5,14 @@ namespace PeakLateJoin
     public struct ImprovedSpawnTarget
     {
         public Character LowestCharacter;
+        private float _lowestY;
 
-        public float LowestClimbed =>
-            LowestCharacter ? LowestCharacter.Center.y : float.PositiveInfinity;
-
-        public void RegisterCharacter(Character character)
+        public void RegisterCharacter(Character character, float y)
         {
-            if (character.Center.y < LowestClimbed)
+            if (LowestCharacter == null || y < _lowestY)
             {
                 LowestCharacter = character;
+                _lowestY = y;
             }
         }
     }

@@ -10,8 +10,7 @@ namespace PeakLateJoin
     public class LateJoinHandler : MonoBehaviourPunCallbacks
     {
         private ManualLogSource _logger;
-
-        private readonly Dictionary<int, bool> _lastKnownDead = new Dictionary<int, bool>();
+        private readonly Dictionary<int, bool> _lastKnownDead = new();
 
         public void InitLogger(ManualLogSource logger)
         {
@@ -33,7 +32,7 @@ namespace PeakLateJoin
                     SaveDeathState(c.photonView.Owner, isDead);
                     _lastKnownDead[actorId] = isDead;
 
-                    _logger?.LogInfo($"Updated death state for {c.characterName}: {(isDead ? "dead" : "alive")}");
+                    _logger?.LogInfo($"[DeathSync] {c.characterName}: {(isDead ? "dead" : "alive")}");
                 }
             }
         }
@@ -61,11 +60,19 @@ namespace PeakLateJoin
         {
             Character newCharacter = null;
 
+            // Wait until Character is initialized
             while (newCharacter == null)
             {
                 newCharacter = PlayerHandler.GetPlayerCharacter(newPlayer);
                 yield return null;
             }
+
+            // Wait until CharacterData exists
+            while (newCharacter.data == null)
+                yield return null;
+
+            // Wait a bit longer to avoid conflict with RPC_SyncOnJoin
+            yield return new WaitForSeconds(1.5f);
 
             bool wasDead = false;
             string savedStage = null;
@@ -81,51 +88,68 @@ namespace PeakLateJoin
 
             string currentStage = SceneManager.GetActiveScene().name;
 
-            if (wasDead && savedStage == currentStage)
-            {
-                _logger.LogInfo($"Player {newCharacter.characterName} was dead in stage {currentStage}, keeping them dead.");
-                newCharacter.data.dead = true;
-                yield break;
-            }
+            _logger?.LogInfo($"[LateJoin] {newCharacter.characterName} joined. SavedStage={savedStage}, CurrentStage={currentStage}, WasDead={wasDead}");
 
-            while (newCharacter.data == null)
-            {
-                yield return null;
-            }
-
+            // Ensure they spawn after RPC sync has settled
             yield return new WaitForSeconds(0.5f);
 
             ImprovedSpawnTarget spawnTarget = PopulateSpawnData(newCharacter);
+
             if (spawnTarget.LowestCharacter == null)
             {
-                _logger.LogError("No valid spawn target found.");
+                _logger.LogWarning($"[LateJoin] No valid spawn target found. Keeping {newCharacter.characterName} at spawn.");
                 yield break;
             }
 
-            _logger.LogInfo($"Peak late join: {newCharacter.characterName} will be warped near {spawnTarget.LowestCharacter.characterName}");
+            Vector3 targetPos = spawnTarget.LowestCharacter.data.isGrounded
+                ? spawnTarget.LowestCharacter.data.groundPos
+                : spawnTarget.LowestCharacter.transform.position;
 
+            _logger.LogInfo($"[LateJoin] {newCharacter.characterName} → warping near {spawnTarget.LowestCharacter.characterName} at Y={targetPos.y:F2}");
+
+            // Try updating spawnPoint before teleport (engine may override position)
+            if (newCharacter.data.spawnPoint != null)
+            {
+                newCharacter.data.spawnPoint.position = targetPos;
+            }
+
+            // Warp to lowest player
             yield return TeleportUtils.SafeWarp(newCharacter, spawnTarget.LowestCharacter, _logger);
 
-            if (wasDead && savedStage != currentStage)
+            // Handle death state restoration
+            if (wasDead)
             {
-                newCharacter.data.dead = false;
-                _logger.LogInfo($"Revived {newCharacter.characterName} since stage changed ({savedStage} → {currentStage}).");
+                if (savedStage == currentStage)
+                {
+                    newCharacter.data.dead = true;
+                    _logger.LogInfo($"[LateJoin] {newCharacter.characterName} kept dead (same stage).");
+                }
+                else
+                {
+                    newCharacter.data.dead = false;
+                    _logger.LogInfo($"[LateJoin] {newCharacter.characterName} revived (stage changed).");
+                }
             }
 
             SaveDeathState(newPlayer, newCharacter.data.dead);
             _lastKnownDead[newPlayer.ActorNumber] = newCharacter.data.dead;
+
+            _logger.LogInfo($"[LateJoin] Finished processing {newCharacter.characterName}.");
         }
 
         private static ImprovedSpawnTarget PopulateSpawnData(Character newCharacter)
         {
             ImprovedSpawnTarget result = default;
-            foreach (Character allCharacter in Character.AllCharacters)
+
+            foreach (Character c in Character.AllCharacters)
             {
-                if (!allCharacter.data.dead && allCharacter != newCharacter)
-                {
-                    result.RegisterCharacter(allCharacter);
-                }
+                if (c == null || c == newCharacter || c.data == null || c.data.dead)
+                    continue;
+
+                float heightY = c.data.isGrounded ? c.data.groundPos.y : c.transform.position.y;
+                result.RegisterCharacter(c, heightY);
             }
+
             return result;
         }
 
