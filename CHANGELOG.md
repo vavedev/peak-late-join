@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.3.0] - 2025-10-07
+
+### Added
+
+- New handling of position warping, since the new base code was updated to contain additional ground positions, the previous implementation became obsolete and buggy
+- Additional safe time to warp, due to the new RPC event handled in the base game
+
+### Fixed
+
+- Tracking of dead state
+- Ragdolling due to new implementation in base code
+
 ## [1.2.1] - 2025-09-21
 
 ### Changed
