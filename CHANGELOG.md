@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.4.0] - 2025-11-12
+
+### Fixed
+
+- Fixed the handling of teleport, death state and new other states.
+- Adjusted the checking for room with new Photon version.
+- Fixed errors regarding .dead existing state.
+
 ## [1.3.0] - 2025-10-07
 
 ### Added

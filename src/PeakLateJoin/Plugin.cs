@@ -9,7 +9,7 @@ namespace PeakLateJoin
     {
         public const string PLUGIN_GUID = "vavedev.PeakLateJoin";
         public const string PLUGIN_NAME = "Peak Late Join";
-        public const string PLUGIN_VERSION = "1.3.0";
+        public const string PLUGIN_VERSION = "1.4.0";
 
         internal static ManualLogSource Log { get; private set; } = null!;
 
@@ -18,8 +18,8 @@ namespace PeakLateJoin
             Log = Logger;
             Log.LogInfo($"Plugin {PLUGIN_NAME} v{PLUGIN_VERSION} loaded!");
 
-            // Attach late join handler
-            gameObject.AddComponent<LateJoinHandler>().InitLogger(Log);
+            var lateJoin = gameObject.AddComponent<LateJoinHandler>();
+            lateJoin.InitLogger(Log);
         }
     }
 }
